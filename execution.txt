@@ -1,0 +1,116 @@
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+#from sklearn import datasets
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error
+
+kc=pd.read_csv("kc_house_data.csv")
+kc.shape
+kc.describe()
+kc.head()
+kc.dtypes
+kc.nunique()
+kc.isnull().sum()
+kc[kc.isnull().any(axis=1)]
+kc.columns
+
+X=kc[['floors', 'bathrooms', 'lat', 'long', 'bedrooms']] #Independent variables
+y=kc['price'] #Dependent variable
+
+# Finding out the correlation between the features
+corr = X.corr()
+corr.shape
+
+
+# Create a Linear regressor
+lm = LinearRegression()
+
+#test, train split
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size = 0.3, random_state = 4)
+
+# Train the model using the training sets 
+lm.fit(X_train, y_train)
+
+
+lm.intercept_
+
+#Converting the coefficient values to a dataframe
+coeffcients = pd.DataFrame([X_train.columns,lm.coef_]).T
+coeffcients = coeffcients.rename(columns={0: 'Attribute', 1: 'Coefficients'})
+coeffcients
+
+
+y_pred = lm.predict(X_train)
+
+
+# Model Evaluation
+#print('R^2:',metrics.r2_score(y_train, y_pred))
+#print('Adjusted R^2:',1 - (1-metrics.r2_score(y_train, y_pred))*(len(y_train)-1)/(len(y_train)-X_train.shape[1]-1))
+print('MAE:',metrics.mean_absolute_error(y_train, y_pred))
+print('MSE:',metrics.mean_squared_error(y_train, y_pred))
+print('RMSE:',np.sqrt(metrics.mean_squared_error(y_train, y_pred)))
+
+
+# Visualizing the differences between actual prices and predicted values
+plt.scatter(y_train, y_pred)
+plt.xlabel("Prices")
+plt.ylabel("Predicted prices")
+plt.title("Prices vs Predicted prices")
+plt.show()
+
+
+
+
+
+
+
+
+
+------------------- cnn
+
+
+# Importing necessary libraries
+import tensorflow.keras.backend as K
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Conv2D, Flatten
+from keras.utils import to_categorical
+
+# Loading the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Preprocessing the data
+x_train = x_train.reshape((60000, 28, 28, 1))
+x_test = x_test.reshape((10000, 28, 28, 1))
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255
+x_test /= 255
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# Creating the CNN model
+model = Sequential()
+model.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(28,28,1)))
+model.add(Conv2D(32, kernel_size=3, activation='relu'))
+model.add(Flatten())
+model.add(Dense(10, activation='softmax'))
+
+# Compiling the model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Training the model
+model.fit(x_train, y_train, epochs=5, batch_size=128, validation_data=(x_test, y_test))
+
+# Evaluating the model
+score = model.evaluate(x_test, y_test, verbose=0)
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
+
+# Visualizing the model
+model.summary()
